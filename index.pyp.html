@@ -1,0 +1,839 @@
+<!DOCTYPE html><? from formatting import *; ?>
+<html>
+<head>
+	<meta charset="UTF-8" />
+	<meta name="description" content="Easily create and interact with embedded YouTube videos" />
+	<meta name="keywords" content="youtube,javascript,iframe,embed,video,userscript" />
+	<meta name="author" content="nutbread" />
+	<title>YouTube Iframe API</title>
+	<link rel="shortcut icon" href="favicon.png" />
+	<link rel="stylesheet" href="style.css" />
+	<script src="script.js"></script>
+</head>
+<body>
+
+
+<div class="header_bar">
+	<div class="main main_no_overflow header">
+
+		<table class="header_table"><tbody>
+			<tr>
+				<td class="header_table_cell">
+					<div class="header_table_name">
+						<a class="header_table_name_user link_external link_author light_underline" href="https://nutbread.github.io/"><span>nutbread</span></a><span class="header_table_name_separator">/</span><a href="" class="header_table_name_title link_external link_title light_underline"><span>yia</span></a>
+					</div>
+				</td>
+				<td class="header_table_cell">
+					<div class="header_table_separator"></div>
+				</td>
+				<td class="header_table_cell header_table_cell_full">
+					<div class="header_table_description">
+						<div class="header_table_description_name">Youtube Iframe API</div>
+						<div class="header_table_description_body">Easily create and interact with embedded YouTube videos</div>
+					</div>
+				</td>
+				<td class="header_table_cell">
+					<a class="header_table_view_on_github link_external link_view_on_github light_nohover_color_hover" href="https://github.com/nutbread/yia">
+						<div class="header_table_view_on_github_line1">view on</div>
+						<div class="header_table_view_on_github_line2">github</div>
+					</a>
+				</td>
+			</tr>
+		</tbody></table>
+
+	</div>
+</div>
+<div class="main body">
+
+	<div class="main_table">
+		<div class="main_table_full">
+			<div>
+
+				<h1 id="about"><span class="hardlink_text">About<a class="hardlink" href="#about"></a></span></h1>
+				<p>
+					This library is a reworking of YouTube's default embedding iframe API. It contains a few extra features and has readable and modifiable source code.
+					It can be directly integrated into an existing script or loaded as a stand-alone script.
+				</p>
+				<p>
+					It can also be used to learn how the basic <code>postMessage</code> system communicates between the main window and the embedded iframe.
+				</p>
+
+				<h1 id="features"><span class="hardlink_text">Feature Comparison<a class="hardlink" href="#features"></a></span></h1>
+				<p>
+					<ul>
+						<li>
+							<b>Extra events with extra information</b><br />
+							YouTube's <a href="https://developers.google.com/youtube/iframe_api_reference#Events" target="_blank" class="light_underline link_external"><span>API</span></a> contains 6 usable events.
+							This custom API contains all of these events <code>plus</code> several extra state changing events for things such as volume, load progress, and playlist entry changing.
+							Additionally, these events expose the previous value before the change.
+						</li>
+						<li>
+							<b>No <code>onYouTubeIframeAPIReady</code> event required</b><br />
+							YouTube's <a href="https://developers.google.com/youtube/iframe_api_reference#Loading_a_Video_Player" target="_blank" class="light_underline link_external"><span>API</span></a> requires a function called <code>onYouTubeIframeAPIReady</code> <em>to exist somewhere in a <code>&lt;script&gt;</code> tag on the page</em>.
+							This makes it very difficult (or impossible) to use their API inside of a userscript, because the event (and subsequently the <code>YT</code> object) will exist on the main <code>window</code> object and not inside the userscript.
+						</li>
+						<li>
+							<b>No required state polling</b><br />
+							YouTube's API provides a limited amount of events for checking state updates.
+							As such, things like load progress or current time would require a poll loop.
+							With more events available for use, a poll loop is no longer required for state update.
+						</li>
+						<li>
+							<b>No repeating <code>listening</code> message</b><br />
+							YouTube's API repeatedly <code>postMessage</code>'s a <code>listening</code> event to the iframe every 250ms.
+							Testing seems to indicate that this message is needed only once, so this custom script only sends it once.
+							<span class="light">There could be a reason for this on some untested edge cases or mobile platforms, but none have been found yet.</span>
+						</li>
+						<li>
+							<b>Less http requests for scripts</b><br />
+							Including YouTube's <a href="https://www.youtube.com/iframe_api" target="_blank" class="light_underline link_external"><code>iframe_api</code></a> script effectively loads 2 scripts instead of one.
+							The <code>iframe_api</code> is just a loader script and inserts another <code>&lt;script&gt;</code> node for the actual API.
+							The second script is automatically <code>async</code> as well with no options to control this.
+						</li>
+						<li>
+							<b>Potentially more prone to breaking</b><br />
+							As this script is a third-party library, if YouTube drastically changes the way their API functions, this script has to be updated too.
+							<span class="light">Looking at YouTube's API update history, this does not seem to be likely to happen though.</span>
+						</li>
+					</ul>
+				</p>
+
+				<h1 id="download"><span class="hardlink_text">Download<a class="hardlink" href="#download"></a></span></h1>
+				<p>
+					<ul>
+						<li>
+							<a class="link_codebase light_underline" href="https://github.com/nutbread/yia/blob/gh-pages/src/youtube_iframe_api.js" target="_blank"><span>youtube_iframe_api.js</span></a> - Custom YouTube iframe API script
+						</li>
+					</ul>
+				</p>
+
+				<h1 id="api"><span class="hardlink_text">Documentation<a class="hardlink" href="#documentation"></a></span></h1>
+				<p>
+					This documentation is fairly minimal in an effort to not over-rewrite or copy YouTube's original documentation. For most of the functions listed on this page, their parallels can be found in the original documentation, which may contain some extra info about arguments and such.
+				</p>
+				<p>
+					The extended descriptions are minimized by default for ease of locating functions by name. Click the <strong>+</strong>/<strong>&minus;</strong> <span class="script_enabled">or the function name</span> to expand/shrink the description.
+					<span class="script_enabled">
+						(<a class="light_underline" id="doc_expand_all"><span>expand all</span></a> |
+						<a class="light_underline" id="doc_shrink_all"><span>shrink all</span></a>)
+					</span>
+				</p>
+
+				<h6 id="references"><span class="hardlink_text">References<a class="hardlink" href="#references"></a></span></h6>
+				<p>
+					<ul>
+						<li>
+							<a class="link_external light_underline" href="https://developers.google.com/youtube/iframe_api_reference" target="_blank"><span>YouTube Iframe API Reference</span></a>
+						 </li>
+						 <li>
+							<a class="link_external light_underline" href="https://developers.google.com/youtube/player_parameters" target="_blank"><span>YouTube Player Parameters</span></a>
+						</li>
+					</ul>
+				</p>
+
+				<h4 id="Youtube"><span class="hardlink_text">Youtube Module<a class="hardlink" href="#Youtube"></a></span></h4>
+				<p>
+					<ul class="doc_list">
+						<?
+set_section_name("Youtube");
+pyp.write(member_header(
+	"Youtube",
+	[
+		("version_info", { "type": "Array", }),
+	],
+	{ "id": "version_info", "description": 'An array containing the current version of the API. For example, <code>[1, 0]</code> represents version 1.0.', }
+));
+pyp.write(member_header(
+	"Youtube",
+	[
+		("supported", { "type": "boolean", }),
+	],
+	{ "id": "supported", "description": 'A boolean telling if the module can be supported. This basically checks if <code>postMessage</code> is available.', }
+));
+?>
+					</ul>
+				</p>
+
+				<h4 id="Player"><span class="hardlink_text">Player Class<a class="hardlink" href="#Player"></a></span></h4>
+				<p>
+					<ul class="doc_list">
+						<?
+set_section_name("new");
+pyp.write(function_header(
+	"Youtube",
+	("Player", { "description": 'Create a new instance. This will create and set up all state variables, events, and the iframe, <strong>but will not insert it into the DOM</strong>. This is left up to the user.', }),
+	("instance", { "description": 'A new instance of the <code>Player</code> class', }),
+	[
+		("settings", { "type": "object", "description": ...?>
+<p>
+	An object describing the settings to create the player with. The format of the object should be as follows:
+</p>
+<p>
+<div class="codeblock codeblock_pre"><div class="codeblock_inner">{
+  video_id: /* string id of the video */,
+  https: /* true or false; true forces a https: embed URL even on http: links */
+  params: { /* key:value pairs of <a class="link_external light_underline" href="https://developers.google.com/youtube/player_parameters#parameter-subheader" target="_blank"><span>player parameters</span></a> */ },
+  on: { /* key:value pairs of event_name:callbacks */ },
+}</div></div>
+</p>
+<?... }),
+	],
+	{
+		"prefix": "new ",
+		"full_header": True,
+		"block_header": False,
+	}
+));
+set_section_name("Player");
+pyp.write(function_header(
+	"Player",
+	("destroy", { "description": 'Destroys the player, removing any event listeners applied to it or any DOM nodes related to it. Also removes the iframe from the DOM.', }),
+	(None, {}),
+	[],
+	{ "full_header": True, "block_header": False, }
+));
+pyp.write(function_header(
+	"Player",
+	("get_iframe", { "description": 'Returns the iframe node that contains the player.', }),
+	("DOM node", { "description": 'The iframe node' }),
+	[],
+	{ "full_header": True, "block_header": False, }
+));
+pyp.write(function_header(
+	"Player",
+	("is_ready", { "description": 'Returns if any <code>ready</code> events have already been fired.', }),
+	("DOM node", { "description": '<code>true</code> if the player can properly accept commands, <code>false</code> otherwise' }),
+	[],
+	{ "full_header": True, "block_header": False, }
+));
+
+pyp.write(member_header(
+	"Player",
+	[
+		("UNSTARTED", { "value": -1, }),
+		("ENDED", { "value": 0, }),
+		("PLAYING", { "value": 1, }),
+		("PAUSED", { "value": 2, }),
+		("BUFFERING", { "value": 3, }),
+		("CUED", { "value": 5, }),
+	],
+	{ "id": "STATE_CONSTANTS", "description": 'Constants representing the state of a player. Their names are self explanatory.', }
+));
+?>
+					</ul>
+				</p>
+
+				<?= section_header("Player Queueing", "Player.queueing", "Player") ?>
+				<p>
+					Note that for the following three functions, only the first argument is required. The remaining arguments are optional, and a default is used if they are set to <code>null</code> or <code>undefined</code>.
+				</p>
+				<p>
+					<ul class="doc_list">
+						<?
+pyp.write(function_header(
+	"Player",
+	("load_video", { "description": 'Loads a new video into the player given a video id.', }),
+	(None, {}),
+	[
+		("video_id", { "type": "string", "description": 'The id of the video to load' }),
+		("autoplay", { "type": "boolean", "description": 'If <code>true</code>, the video will (under most circumstances) autoplay' }),
+		("quality", { "type": "string", "description": 'The desired quality level of the video to play' }),
+		("start_time", { "type": "number", "description": 'The time (in seconds) to start playing the video at' }),
+		("end_time", { "type": "number", "description": 'The time (in seconds) to stop playing the video at' }),
+	],
+	{ "full_header": True, "block_header": False, }
+));
+pyp.write(function_header(
+	"Player",
+	("load_video_from_url", { "description": 'Loads a new video into the player given a video url.', }),
+	(None, {}),
+	[
+		("video_url", { "type": "string", "description": 'The url of the video to load' }),
+		("autoplay", { "type": "boolean", "description": 'If <code>true</code>, the video will (under most circumstances) autoplay' }),
+		("quality", { "type": "string", "description": 'The desired quality level of the video to play' }),
+		("start_time", { "type": "number", "description": 'The time (in seconds) to start playing the video at' }),
+		("end_time", { "type": "number", "description": 'The time (in seconds) to stop playing the video at' }),
+	],
+	{ "full_header": True, "block_header": False, }
+));
+pyp.write(function_header(
+	"Player",
+	("load_playlist", { "description": 'Loads a playlist into the player. The playlist can be a custom playlist, a pre-existing playlist, a search results playlist, or a user uploads playlist.', }),
+	(None, {}),
+	[
+		("playlist", { "type": "string | Array", "description": ...?>
+If this argument is an array, then it should be an array of video ids in the order they should be played.
+Otherwise, it depends on the value of <code>playlist_type</code>:<br />
+<ul>
+	<li>
+		<strong><code>"playlist"</code></strong><br />
+		The id of a YouTube playlist
+	</li>
+	<li>
+		<strong><code>"search"</code></strong><br />
+		The search term for the videos
+	</li>
+	<li>
+		<strong><code>"user_uploads"</code></strong><br />
+		The name of the user
+	</li>
+</ul>
+<?... }),
+		("type", { "type": "string", "description": 'The type of playlist to load. This can be either <code>"playlist"</code>, <code>"search"</code>, or <code>"user_uploads"</code>. If unspecified, the default is <code>"playlist"</code>. If <code>playlist</code> is an array, this argument is ignored.' }),
+		("index", { "type": "number", "description": 'The first video in the playlist to play as a 0-indexed number' }),
+		("autoplay", { "type": "boolean", "description": 'If <code>true</code>, the playlist will (under most circumstances) autoplay' }),
+		("quality", { "type": "string", "description": 'The desired quality level of the video to play' }),
+		("start_time", { "type": "number", "description": 'The time (in seconds) to start playing the first video at' }),
+	],
+	{ "full_header": True, "block_header": False, }
+));
+?>
+					</ul>
+				</p>
+
+				<?= section_header("Video/Playlist Playback", "Player.playback", "Player") ?>
+				<p>
+					<ul class="doc_list">
+						<?
+pyp.write(function_header(
+	"Player",
+	("play", { "description": 'Plays the video; the state will be set to <a class="light_underline" href="#Player.STATE_CONSTANTS" target="_blank"><span>PLAYING</span></a>.', }),
+	(None, {}),
+	[],
+	{ "full_header": True, "block_header": False, }
+));
+pyp.write(function_header(
+	"Player",
+	("pause", { "description": 'Pauses the video; the state will be set to <a class="light_underline" href="#Player.STATE_CONSTANTS" target="_blank"><span>PAUSED</span></a>.', }),
+	(None, {}),
+	[],
+	{ "full_header": True, "block_header": False, }
+));
+pyp.write(function_header(
+	"Player",
+	("stop", { "description": 'Stops the video. Should only be used when the player is completely done and won\'t be used again.<br />The state will be set to one of the following: <a class="light_underline" href="#Player.STATE_CONSTANTS" target="_blank"><span>ENDED</span></a>, <a class="light_underline" href="#Player.STATE_CONSTANTS" target="_blank"><span>PAUSED</span></a>, <a class="light_underline" href="#Player.STATE_CONSTANTS" target="_blank"><span>CUED</span></a>, or <a class="light_underline" href="#Player.STATE_CONSTANTS" target="_blank"><span>UNSTARTED</span></a>.', }),
+	(None, {}),
+	[],
+	{ "full_header": True, "block_header": False, }
+));
+pyp.write(function_header(
+	"Player",
+	("clear", { "description": 'Clears any video remnant once the video is stopped.', }),
+	(None, {}),
+	[],
+	{ "full_header": True, "block_header": False, }
+));
+pyp.write(function_header(
+	"Player",
+	("mute", { "description": 'Mutes the video.', }),
+	(None, {}),
+	[],
+	{ "full_header": True, "block_header": False, }
+));
+pyp.write(function_header(
+	"Player",
+	("unmute", { "description": 'Unmutes the video.', }),
+	(None, {}),
+	[],
+	{ "full_header": True, "block_header": False, }
+));
+pyp.write(function_header(
+	"Player",
+	("seek", { "description": 'Seeks to a position in the video.', }),
+	(None, {}),
+	[
+		("timecode", { "type": "number", "description": 'The timecode (in seconds) to seek to' }),
+		("allow_seek_ahead", { "type": "boolean", "description": 'If <code>true</code>, the video is allowed to skip out of the presently buffered region.<br />When seeking, this should be set to <code>false</code> and called again with <code>true</code> when seeking is done (i.e. on a mouseup event.)' }),
+	],
+	{ "full_header": True, "block_header": False, }
+));
+pyp.write(function_header(
+	"Player",
+	("goto_next", { "description": 'Skips to the next video in a playlist.', }),
+	(None, {}),
+	[],
+	{ "full_header": True, "block_header": False, }
+));
+pyp.write(function_header(
+	"Player",
+	("goto_previous", { "description": 'Skips to the previous video in a playlist.', }),
+	(None, {}),
+	[],
+	{ "full_header": True, "block_header": False, }
+));
+pyp.write(function_header(
+	"Player",
+	("goto_at", { "description": 'Skips to a specified video in a playlist.', }),
+	(None, {}),
+	[
+		("index", { "type": "number", "description": 'The 0-indexed video to skip to' }),
+	],
+	{ "full_header": True, "block_header": False, }
+));
+?>
+					</ul>
+				</p>
+
+				<?= section_header("Player State", "Player.state", "Player") ?>
+				<p>
+					<ul class="doc_list">
+						<?
+pyp.write(function_header(
+	"Player",
+	("is_muted", { "description": 'Returns if the video is muted or not.', }),
+	("boolean", { "description": 'Returns <code>true</code> if muted, <code>false</code> otherwise', }),
+	[],
+	{ "full_header": True, "block_header": False, }
+));
+pyp.write(function_header(
+	"Player",
+	("get_volume", { "description": 'Get the volume.', }),
+	("number", { "description": 'Returns a number in the range 0 to 100 corresponding to a percent', }),
+	[],
+	{ "full_header": True, "block_header": False, }
+));
+pyp.write(function_header(
+	"Player",
+	("set_volume", { "description": 'Set the volume.', }),
+	(None, {}),
+	[
+		("volume", { "type": "number", "description": 'A number in the range 0 to 100 corresponding to the percent of desired volume' }),
+	],
+	{ "full_header": True, "block_header": False, }
+));
+
+pyp.write(function_header(
+	"Player",
+	("get_playback_rate", { "description": 'Get the rate of playback.', }),
+	("number", { "description": 'Returns the rate at which the video is playing. Example values include <code>0.25</code>, <code>0.5</code>, <code>1.0</code>, <code>1.5</code>, and <code>2.0</code>.', }),
+	[],
+	{ "full_header": True, "block_header": False, }
+));
+pyp.write(function_header(
+	"Player",
+	("get_playback_rates_available", { "description": 'Get the available playback rates.', }),
+	("Array", { "description": 'Returns a list of rates at which the video can be played at', }),
+	[],
+	{ "full_header": True, "block_header": False, }
+));
+pyp.write(function_header(
+	"Player",
+	("set_playback_rate", { "description": 'Set the rate of playback.', }),
+	(None, {}),
+	[
+		("rate", { "type": "number", "description": 'The speed at which to play the video. Available values can be discovered by calling <code>get_playback_rates_available</code>.' }),
+	],
+	{ "full_header": True, "block_header": False, }
+));
+
+pyp.write(function_header(
+	"Player",
+	("get_playback_quality", { "description": 'Get the playback quality.', }),
+	("string", { "description": 'Returns the quality level of the video', }),
+	[],
+	{ "full_header": True, "block_header": False, }
+));
+pyp.write(function_header(
+	"Player",
+	("get_playback_qualities_available", { "description": 'Get the available playback qualities.', }),
+	("Array", { "description": 'Returns a list of qualities the video supports', }),
+	[],
+	{ "full_header": True, "block_header": False, }
+));
+pyp.write(function_header(
+	"Player",
+	("set_playback_quality", { "description": 'Set the playback quality.', }),
+	(None, {}),
+	[
+		("quality", { "type": "string", "description": 'Set the desired quality of the video. Available values can be discovered by calling <code>get_playback_qualities_available</code>.' }),
+	],
+	{ "full_header": True, "block_header": False, }
+));
+
+pyp.write(function_header(
+	"Player",
+	("set_loop", { "description": 'Set if the playlist should loop on completion.', }),
+	(None, {}),
+	[
+		("loop", { "type": "string", "description": '<code>true</code> if playlist should loop, <code>false</code> otherwise.' }),
+	],
+	{ "full_header": True, "block_header": False, }
+));
+pyp.write(function_header(
+	"Player",
+	("set_shuffle", { "description": 'Set if the playlist should shuffle.', }),
+	(None, {}),
+	[
+		("shuffle", { "type": "string", "description": '<code>true</code> if playlist should shuffle, <code>false</code> otherwise.' }),
+	],
+	{ "full_header": True, "block_header": False, }
+));
+
+pyp.write(function_header(
+	"Player",
+	("get_loaded_fraction", { "description": 'Get the percent of the video loaded.', }),
+	("number", { "description": 'The percentage of the video loaded. <code>0.0</code> is nothing loaded, <code>1.0</code> is completely loaded.', }),
+	[],
+	{ "full_header": True, "block_header": False, }
+));
+pyp.write(function_header(
+	"Player",
+	("get_player_state", { "description": 'Get the current state of the video player.', }),
+	("integer", { "description": 'The constant representing the player\'s current state. The value should be one of the <a class="light_underline" href="#Player.STATE_CONSTANTS" target="_blank"><span>STATE_CONSTANTS</span></a>.', }),
+	[],
+	{ "full_header": True, "block_header": False, }
+));
+
+pyp.write(function_header(
+	"Player",
+	("get_current_time", { "description": 'Get the current time the video is at.', }),
+	("number", { "description": 'The current time in seconds', }),
+	[],
+	{ "full_header": True, "block_header": False, }
+));
+pyp.write(function_header(
+	"Player",
+	("get_duration", { "description": 'Get total length of the video.', }),
+	("number", { "description": 'The total length in seconds', }),
+	[],
+	{ "full_header": True, "block_header": False, }
+));
+
+pyp.write(function_header(
+	"Player",
+	("get_video_data", { "description": 'Returns info about the currently playing video, such as video id, author, and title.', }),
+	("object", { "description": 'An object containing info about the video', }),
+	[],
+	{ "full_header": True, "block_header": False, }
+));
+pyp.write(function_header(
+	"Player",
+	("get_playlist", { "description": 'Get the current playlist.', }),
+	("null | Array", { "description": 'If no playlist is being used, <code>null</code> is returned. Otherwise, it\'s an array of video ids. <span class="light">If <code>set_shuffle</code> was called, this return value reflects the shuffled playlist.</span>', }),
+	[],
+	{ "full_header": True, "block_header": False, }
+));
+pyp.write(function_header(
+	"Player",
+	("get_playlist_index", { "description": 'Get the current index into the playlist.', }),
+	("integer", { "description": 'If no playlist is being used, <code>-1</code> is returned. Otherwise, it\'s a 0-indexed number into the playlist.', }),
+	[],
+	{ "full_header": True, "block_header": False, }
+));
+?>
+					</ul>
+				</p>
+
+				<?= section_header("Extended API", "Player.extended_api", "Player") ?>
+				<p>
+					The extended API covers other settings YouTube provides control over that may or may not be available on every video.
+				</p>
+				<p>
+					Note that YouTube's documentation on their similar <code>getOption</code>, <code>getOptions</code>, and <code>setOption</code> functions is dated. Explore the <code>get_api</code> return value to discover which options are available.
+				</p>
+				<p>
+					<ul class="doc_list">
+						<?
+pyp.write(function_header(
+	"Player",
+	("get_api", { "description": 'Returns the complete available extended API. The return value should be read-only, as modifying it directly does nothing.', }),
+	("object", { "description": ...?>
+An object of the form:
+<div class="codeblock codeblock_pre"><div class="codeblock_inner">{
+  module1: {
+    option1: /* some type of value */,
+    option2: /* some type of value */,
+    ...
+  },
+  module2: { ... },
+  ...
+}</div></div>
+<?..., }),
+	[],
+	{ "full_header": True, "block_header": False, }
+));
+pyp.write(function_header(
+	"Player",
+	("set_api", { "description": 'Modifies extra API values. An <code>"api_change"</code> event should trigger after a successful update.', }),
+	(None, {}),
+	[
+		("module", { "type": "string", "description": 'The name of the module' }),
+		("option", { "type": "string", "description": 'The option of the module' }),
+		("value", { "type": "any", "description": 'The value to set the option to' }),
+	],
+	{ "full_header": True, "block_header": False, }
+));
+?>
+					</ul>
+				</p>
+
+
+				<?= section_header("Player Events", "Player.events", "Player") ?>
+				<p>
+					Unless otherwise specified, the event data of all events are called with an <code>event_data</code> argument of the form:<br />
+<div class="codeblock codeblock_pre"><div class="codeblock_inner">{
+  current: { /* key:value pairs of the new values */ },
+  previous: { /* key:value pairs of the old values */ },
+}</div></div>
+				</p>
+				<p>
+					<ul class="doc_list">
+						<?
+pyp.write(function_header(
+	"Player",
+	("on", { "description": 'Adds a new event listener to the player instance.', }),
+	("boolean", { "description": '<code>true</code> if the event exists and the callback was added, <code>false</code> otherwise', }),
+	[
+		("event_name", { "type": "string", "description": 'The name of the event to listen for' }),
+		("callback", { "type": "function", "description": '<p>A function to be called when the event is triggered. The <code>this</code> object of the call will be the player instance, and the first argument contains any event-specific data.</p><p><code>callback.call(player_instance, event_data)</code></p>' }),
+	],
+	{ "full_header": True, "block_header": False, }
+));
+pyp.write(function_header(
+	"Player",
+	("off", { "description": 'Removes an existing event listener from the player instance.', }),
+	("boolean", { "description": '<code>true</code> if the callback was successfully removed, <code>false</code> otherwise', }),
+	[
+		("event_name", { "type": "string", "description": 'The name of the event to remove the listener from' }),
+		("callback", { "type": "function", "description": 'The event listener to remove' }),
+	],
+	{ "full_header": True, "block_header": False, }
+));
+
+pyp.write('</ul></p><p><ul class="doc_list">');
+
+set_section_name("Player.events");
+pyp.write(event_header(
+	"ready",
+	{
+		"id": "ready",
+		"object": "event",
+		"description": '<p>This event will be called as soon as it can be. This means, if the iframe triggers it\'s ready event, all callbacks will trigger at this point. If a callback is added after the iframe event triggers, <strong>it will fire inside the <code>on</code> call</strong>.</p><p>The <code>event_data</code> is of the form:<br /><code>{ immediate: /* true or false */ }</code><br />The <code>immediate</code> entry will be <code>true</code> if it was called during the <code>on</code> call, and <code>false</code> otherwise.</p>',
+	}
+));
+
+pyp.write('</ul></p><p><ul class="doc_list">');
+
+pyp.write(event_header(
+	"state_change",
+	{
+		"id": "state_change",
+		"object": "event",
+		"description": 'This event fires when a state change occurs.',
+	}
+));
+pyp.write(event_header(
+	"volume_change",
+	{
+		"id": "volume_change",
+		"object": "event",
+		"description": 'This event fires when a volume change or muted change occurs.',
+	}
+));
+pyp.write(event_header(
+	"time_change",
+	{
+		"id": "time_change",
+		"object": "event",
+		"description": 'This event fires when the video\'s current time changes.',
+	}
+));
+pyp.write(event_header(
+	"duration_change",
+	{
+		"id": "duration_change",
+		"object": "event",
+		"description": 'This event fires when the video\'s duration changes.<br />This usually happens when the precision of the duration changes (i.e. integer number to a floating point.)',
+	}
+));
+pyp.write(event_header(
+	"progress",
+	{
+		"id": "progress",
+		"object": "event",
+		"description": 'This event fires when the loaded fraction changes.',
+	}
+));
+pyp.write(event_header(
+	"playback_quality_change",
+	{
+		"id": "playback_quality_change",
+		"object": "event",
+		"description": 'This event fires when the playback quality changes.',
+	}
+));
+pyp.write(event_header(
+	"playback_rate_change",
+	{
+		"id": "playback_rate_change",
+		"object": "event",
+		"description": 'This event fires when the playback rate changes.',
+	}
+));
+pyp.write(event_header(
+	"playback_qualities_available_change",
+	{
+		"id": "playback_qualities_available_change",
+		"object": "event",
+		"description": 'This event fires when the list of available playback qualities changes.',
+	}
+));
+pyp.write(event_header(
+	"playback_rates_available_change",
+	{
+		"id": "playback_rates_available_change",
+		"object": "event",
+		"description": 'This event fires when the list of available playback rates changes.',
+	}
+));
+pyp.write(event_header(
+	"video_data_change",
+	{
+		"id": "video_data_change",
+		"object": "event",
+		"description": 'This event fires when the available video data changes.',
+	}
+));
+pyp.write(event_header(
+	"playlist_change",
+	{
+		"id": "playlist_change",
+		"object": "event",
+		"description": 'This event fires when the playlist changes.',
+	}
+));
+pyp.write(event_header(
+	"playlist_index_change",
+	{
+		"id": "playlist_index_change",
+		"object": "event",
+		"description": 'This event fires when the current playlist index changes.',
+	}
+));
+pyp.write(event_header(
+	"api_change",
+	{
+		"id": "api_change",
+		"object": "event",
+		"description": 'This event fires when an API change occurs.',
+	}
+));
+
+pyp.write('</ul></p><p><ul class="doc_list">');
+
+pyp.write(event_header(
+	"yt_state_change",
+	{
+		"id": "yt_state_change",
+		"object": "event",
+		"description": '<p>This event fires when a state change occurs. It uses the native event provided by YouTube\'s API.</p><p>The <code>event_data</code> is of the form:<br /><code>{ value: /* new state */ }</code></p>',
+	}
+));
+pyp.write(event_header(
+	"yt_playback_quality_change",
+	{
+		"id": "yt_playback_quality_change",
+		"object": "event",
+		"description": '<p>This event fires when a playback quality change occurs. It uses the native event provided by YouTube\'s API.</p><p>The <code>event_data</code> is of the form:<br /><code>{ value: /* new quality */ }</code></p>',
+	}
+));
+pyp.write(event_header(
+	"yt_playback_rate_change",
+	{
+		"id": "yt_playback_rate_change",
+		"object": "event",
+		"description": '<p>This event fires when a playback rate change occurs. It uses the native event provided by YouTube\'s API.</p><p>The <code>event_data</code> is of the form:<br /><code>{ value: /* new rate */ }</code></p>',
+	}
+));
+pyp.write(event_header(
+	"yt_api_change",
+	{
+		"id": "yt_api_change",
+		"object": "event",
+		"description": '<p>This event fires when an API change occurs. It uses the native event provided by YouTube\'s API.</p><p>The <code>event_data</code> is of the form:<br /><code>{ value: null }</code></p>',
+	}
+));
+pyp.write(event_header(
+	"yt_error",
+	{
+		"id": "yt_error",
+		"object": "event",
+		"description": '<p>This event fires when an error occurs. It uses the native event provided by YouTube\'s API.</p><p>The <code>event_data</code> is of the form:<br /><code>{ value: /* error info */ }</code></p>',
+	}
+));
+?>
+					</ul>
+				</p>
+
+				<h1 id="demo"><span class="hardlink_text">Demo<a class="hardlink" href="#demo"></a></span></h1>
+				<p>
+					<div class="demo_region_preload demo_region_preload_visible">
+						<span class="script_disabled script_visible">
+							The demo requires Javascript enabled to use.
+						</span>
+						<span class="demo_status_message">
+							The demo is loading...
+						</span>
+						<span class="script_enabled">
+							To begin the demo, <a href="#demo" class="light_underline" id="demo_start"><span>click here</span></a>.
+						</span>
+					</div>
+					<div class="demo_region">
+						<div class="demo_iframe_container_size"><div class="demo_iframe_container"></div></div>
+						<table class="demo_control_table"><tbody>
+							<tr class="demo_control_table_header">
+								<td>Actions</td>
+								<td>Playback</td>
+								<td>Loading</td>
+								<td>Playlist</td>
+							</tr>
+							<tr class="demo_control_table_body">
+								<td><div class="demo_control_region_container"><div class="demo_control_region" id="demo_actions"></div></div></td>
+								<td><div class="demo_control_region_container"><div class="demo_control_region" id="demo_playback"></div></div></td>
+								<td><div class="demo_control_region_container"><div class="demo_control_region" id="demo_loading"></div></div></td>
+								<td><div class="demo_control_region_container"><div class="demo_control_region" id="demo_playlist"></div></div></td>
+							</tr>
+							<tr class="demo_control_table_header">
+								<td>State</td>
+								<td>Extended API</td>
+								<td colspan="2">Event Log</td>
+							</tr>
+							<tr class="demo_control_table_body">
+								<td><div class="demo_control_region_container"><div class="demo_control_region" id="demo_state"></div></div></td>
+								<td><div class="demo_control_region_container demo_control_region_container_full"><div class="demo_control_region"><textarea class="code_textarea" id="demo_extended_api" wrap="off" spellcheck="false" autocomplete="off" readonly></textarea></div></div></td>
+								<td colspan="2"><div class="demo_control_region_container"><div class="demo_control_region" id="demo_log"></div></div></td>
+							</tr>
+						</tbody></table>
+					</div>
+				</p>
+
+			</div>
+		</div>
+		<div class="main_table_side navigation_column"><div class="navigation_container">
+			<div class="navigation"><div class="navigation_padding"><div class="navigation_body">
+				<div class="navigation_option"><a class="navigation_option_link" href="#about"><span>About</span></a></div>
+				<div class="navigation_option"><a class="navigation_option_link" href="#features"><span>Feature Comparison</span></a></div>
+				<div class="navigation_option"><a class="navigation_option_link" href="#download"><span>Download</span></a></div>
+				<div class="navigation_option"><a class="navigation_option_link" href="#documentation"><span>Documentation</span></a></div>
+				<div class="navigation_subsection">
+					<div class="navigation_option"><a class="navigation_option_link" href="#Youtube"><span>Youtube Module</span></a></div>
+					<div class="navigation_option"><a class="navigation_option_link" href="#Player"><span>Player</span></a></div>
+					<div class="navigation_subsection">
+						<div class="navigation_option"><a class="navigation_option_link" href="#Player.queueing"><span>Queueing</span></a></div>
+						<div class="navigation_option"><a class="navigation_option_link" href="#Player.playback"><span>Playback</span></a></div>
+						<div class="navigation_option"><a class="navigation_option_link" href="#Player.state"><span>State</span></a></div>
+						<div class="navigation_option"><a class="navigation_option_link" href="#Player.extended_api"><span>Extended API</span></a></div>
+						<div class="navigation_option"><a class="navigation_option_link" href="#Player.events"><span>Events</span></a></div>
+					</div>
+				</div>
+				<div class="navigation_option"><a class="navigation_option_link" href="#demo"><span>Demo</span></a></div>
+			</div></div></div>
+		</div></div>
+	</div>
+
+</div>
+
+
+</body>
+</html>
+

@@ -1,0 +1,1 @@
+@pyp --input index.pyp.html --output index.html
