@@ -5,7 +5,7 @@ var Youtube = (function () {
 	"use strict";
 
 	// Version info
-	var version_info = [ 1 , 0 ];
+	var version_info = [ 1 , 0 , 1 ];
 
 
 
@@ -67,13 +67,14 @@ var Youtube = (function () {
 			this.node_events = [];
 			this.events = {};
 			this.events_queued = {}; // contains events that will be hooked when onReady is received
+			this.listening_interval = null;
 
 			// Setup iframe
 			this.iframe = document.createElement("iframe");
 			this.iframe.setAttribute("frameborder", "0");
 
 			// URL
-			this.url_target = (window.location.protocol == "http:" && !settings.https ? "http:" : "https:") + "//www.youtube.com";
+			this.url_target = ("https" in settings && !settings.https ? "http:" : "https:") + "//www.youtube.com";
 
 			url = this.url_target + "/embed"
 			if ("video_id" in settings) url += "/" + settings.video_id;
@@ -306,6 +307,12 @@ var Youtube = (function () {
 			}
 		};
 		var process_on_ready = function (data) {
+			// Clear interval
+			if (this.listening_interval !== null) {
+				clearInterval(this.listening_interval);
+				this.listening_interval = null;
+			}
+
 			// Re-bind events properly
 			var events_map = this.events_queued,
 				list, e, i;
@@ -435,6 +442,13 @@ var Youtube = (function () {
 			}
 		};
 		var on_iframe_load = function (event) {
+			// Begin listening for events
+			on_listening_interval.call(this);
+			if (this.listening_interval !== null) clearInterval(this.listening_interval);
+			this.listening_interval = setInterval(bind_function(on_listening_interval, this), 250); // Interval is needed for IE
+		};
+
+		var on_listening_interval = function () {
 			// Listen for events
 			send_message.call(this, {
 				event: "listening",
