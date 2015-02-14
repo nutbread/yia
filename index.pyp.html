@@ -64,7 +64,7 @@
 						<li>
 							<b>Extra events with extra information</b><br />
 							YouTube's <a href="https://developers.google.com/youtube/iframe_api_reference#Events" target="_blank" class="light_underline link_external"><span>API</span></a> contains 6 usable events.
-							This custom API contains all of these events <code>plus</code> several extra state changing events for things such as volume, load progress, and playlist entry changing.
+							This custom API contains all of these events <em>plus</em> several extra state changing events for things such as volume, load progress, and playlist entry changing.
 							Additionally, these events expose the previous value before the change.
 						</li>
 						<li>
@@ -311,7 +311,7 @@ pyp.write(function_header(
 ));
 pyp.write(function_header(
 	"Player",
-	("stop", { "description": 'Stops the video. Should only be used when the player is completely done and won\'t be used again.<br />The state will be set to one of the following: <a class="light_underline" href="#Player.STATE_CONSTANTS" target="_blank"><span>ENDED</span></a>, <a class="light_underline" href="#Player.STATE_CONSTANTS" target="_blank"><span>PAUSED</span></a>, <a class="light_underline" href="#Player.STATE_CONSTANTS" target="_blank"><span>CUED</span></a>, or <a class="light_underline" href="#Player.STATE_CONSTANTS" target="_blank"><span>UNSTARTED</span></a>.', }),
+	("stop", { "description": 'Stops the video. Should only be used when the player is completely done and won\'t be used again.<br />The state will be set to one of the following: <a class="light_underline" href="#Player.STATE_CONSTANTS"><span>ENDED</span></a>, <a class="light_underline" href="#Player.STATE_CONSTANTS"><span>PAUSED</span></a>, <a class="light_underline" href="#Player.STATE_CONSTANTS"><span>CUED</span></a>, or <a class="light_underline" href="#Player.STATE_CONSTANTS"><span>UNSTARTED</span></a>.', }),
 	(None, {}),
 	[],
 	{ "full_header": True, "block_header": False, }
@@ -479,7 +479,7 @@ pyp.write(function_header(
 pyp.write(function_header(
 	"Player",
 	("get_player_state", { "description": 'Get the current state of the video player.', }),
-	("integer", { "description": 'The constant representing the player\'s current state. The value should be one of the <a class="light_underline" href="#Player.STATE_CONSTANTS" target="_blank"><span>STATE_CONSTANTS</span></a>.', }),
+	("integer", { "description": 'The constant representing the player\'s current state. The value should be one of the <a class="light_underline" href="#Player.STATE_CONSTANTS"><span>STATE_CONSTANTS</span></a>.', }),
 	[],
 	{ "full_header": True, "block_header": False, }
 ));
